@@ -20,7 +20,13 @@ default_version "4.10.4"
 source url: "http://archive.apache.org/dist/lucene/solr/#{version}/solr-#{version}.tgz",
        md5: "8ae107a760b3fc1ec7358a303886ca06"
 
-dependency "server-jre"
+if ppc64? || ppc64le?
+  dependency "ibm-jre"
+elsif intel? && _64_bit?
+  dependency "server-jre"
+else
+  raise "A JRE is required by opscode-solr4, but none are known for this platform"
+end
 
 relative_path "solr-#{version}"
 
