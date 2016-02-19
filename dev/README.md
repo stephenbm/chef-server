@@ -49,7 +49,8 @@ and/or chef-server-ctl commands.
 
 * Changes to erchef erlang files will be picked up and recompiled
   automatically shortly after you save them on the host.
-* To pick up cookbook changes, run `chef-server-ctl reconfigure` in the VM.
+* To test cookbook changes, load them with `dvm load omnibus private-chef-cookbooks`.
+  Then run `chef-server-ctl reconfigure` in the VM to pick up the changes.
 * upgrades and chef-server-ctl command changes/additions will be
   available very quickly after you save them on the host (< 5 seconds)
 * To run pedant tests in the VM, use `dvm run oc-chef-pedant`.  You can also provide the
@@ -87,6 +88,13 @@ system library and declared in a project's app.src is typically
 available.
 
 Ruby project dependency loading support coming soon.
+
+### Installer Options
+
+If you have a package at a non-default location (defaults are `../omnibus/pkg` and this directory),
+you can specify it with the $INSTALLER variable. Also, you can automate the selection of which build
+to use with $AUTOPACKAGE. So, to automatically select a custom package, set $INSTALLER to it's path
+and $AUTOPACKAGE to 1.
 
 ### Coverage Analysis
 

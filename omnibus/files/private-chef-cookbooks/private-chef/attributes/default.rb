@@ -39,6 +39,12 @@ default['private_chef']['license']['upgrade_url'] = "http://www.getchef.com/cont
 
 default['private_chef']['default_orgname'] = nil
 
+# Enable fips mode (openssl)
+# This requires the chef-server-fips package. If you do not have this,
+# your chef-server will probably not work. If you have to manually
+# change this, you're doing it wrong.
+default['private_chef']['fips_enabled'] = false
+
 ###
 # Options for installing addons
 ###
@@ -101,10 +107,6 @@ default['private_chef']['rabbitmq']['log_rotation']['num_to_keep'] = 10
 default['private_chef']['rabbitmq']['vhost'] = '/chef'
 default['private_chef']['rabbitmq']['user'] = 'chef'
 default['private_chef']['rabbitmq']['password'] = 'chefrocks'
-default['private_chef']['rabbitmq']['reindexer_vhost'] = '/reindexer'
-default['private_chef']['rabbitmq']['jobs_vhost'] = '/jobs'
-default['private_chef']['rabbitmq']['jobs_user'] = 'jobs'
-default['private_chef']['rabbitmq']['jobs_password'] = 'workcomplete'
 default['private_chef']['rabbitmq']['actions_user'] = 'actions'
 default['private_chef']['rabbitmq']['actions_password'] = 'changeme'
 default['private_chef']['rabbitmq']['actions_vhost'] = '/analytics'
@@ -229,7 +231,6 @@ default['private_chef']['opscode-expander']['dir'] = "/var/opt/opscode/opscode-e
 default['private_chef']['opscode-expander']['log_directory'] = "/var/log/opscode/opscode-expander"
 default['private_chef']['opscode-expander']['log_rotation']['file_maxbytes'] = 104857600
 default['private_chef']['opscode-expander']['log_rotation']['num_to_keep'] = 10
-default['private_chef']['opscode-expander']['reindexer_log_directory'] = "/var/log/opscode/opscode-expander-reindexer"
 default['private_chef']['opscode-expander']['consumer_id'] = "default"
 default['private_chef']['opscode-expander']['nodes'] = 2
 
@@ -472,6 +473,7 @@ default['private_chef']['nginx']['gzip_types'] = [ "text/plain", "text/css", "ap
 default['private_chef']['nginx']['keepalive_timeout'] = 65
 default['private_chef']['nginx']['client_max_body_size'] = '250m'
 default['private_chef']['nginx']['cache_max_size'] = '5000m'
+default['private_chef']['nginx']['server_names_hash_bucket_size'] = 128
 default['private_chef']['nginx']['enable_ipv6'] = false
 
 ###
@@ -598,6 +600,21 @@ default['private_chef']['bookshelf']['access_key_id'] = "generated-by-default"
 default['private_chef']['bookshelf']['secret_access_key'] = "generated-by-default"
 # Default: set to Host: header. Override to hardcode a url, "http://..."
 default['private_chef']['bookshelf']['external_url'] = :host_header
+default['private_chef']['bookshelf']['storage_type'] = :filesystem
+# This retries connections that are rejected because pooler queue is maxed out.
+default['private_chef']['bookshelf']['sql_retry_count'] = 0
+# Intervals are in milliseconds
+default['private_chef']['bookshelf']['sql_retry_delay'] = 10
+default['private_chef']['bookshelf']['abandoned_upload_cleanup_interval'] = 19 * (60 * 1000)
+default['private_chef']['bookshelf']['deleted_data_cleanup_interval'] = 7 * (60 * 1000)
+default['private_chef']['bookshelf']['db_pool_size'] = 20
+default['private_chef']['bookshelf']['db_pool_queue_max'] = 200
+default['private_chef']['bookshelf']['db_pooler_timeout'] = 2000
+default['private_chef']['bookshelf']['sql_db_timeout'] = 5000
+default['private_chef']['bookshelf']['sql_ro_user'] = 'bookshelf_ro'
+default['private_chef']['bookshelf']['sql_ro_password'] = 'should_never_be_used'
+default['private_chef']['bookshelf']['sql_user'] = 'bookshelf'
+default['private_chef']['bookshelf']['sql_password'] = 'should_never_be_used'
 
 ###
 # Chef Identity

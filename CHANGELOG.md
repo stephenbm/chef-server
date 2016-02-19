@@ -1,5 +1,85 @@
 # Chef Server Changelog
 
+## [12.4.1](https://github.com/chef/chef-server/tree/12.4.1) (2016-02-03)
+[Full Changelog](https://github.com/chef/chef-server/compare/12.4.0...12.4.1)
+
+### Components
+
+#### Updated
+* ohai (81f1c968 -> d9262d06)
+* chef (ec5a8925 -> 09227432)
+
+## Detailed Change Log
+
+**Fixed bugs:**
+
+- chef-server-ctl upgrade broken in 12.4.0 [\#724](https://github.com/chef/chef-server/issues/724)
+- Create cookbook artifacts with all fields filled in [\#714](https://github.com/chef/chef-server/pull/714) ([danielsdeleo](https://github.com/danielsdeleo))
+
+## 12.4.0 (2016-01-27)
+
+### Components
+
+#### Updated
+* openssl (1.0.1p -> 1.0.1q)
+* knife-opc (528be923 -> 0b8fa0fa)
+* ohai (f1e35bf1 -> 81f1c968)
+* chef (2fe875ce -> 3f3fbc8f)
+
+#### New
+* rest-client (1.8.0)
+
+#### Removed
+* chef-server-bootstrap
+
+## Detailed Change Log
+
+* `oc-pedant`
+    * Replace /policies/:group/:name in spec descriptions with /policy_groups/:group_name/policies/:policy_name.
+    * Fix spec descriptions that were copied from /cookbooks to cookbook_artifacts.
+    * Allow opt-out of RVM/bundler busting in knife pedant tests
+    * Add validation tag to header validation test
+
+* `oc-erchef`
+    * Added ACL endpoints for policies and policy groups; also pedant tests
+    * Implement RFC 14 - Add universe endpoint
+    * V1 of Server Admins. Implements flexable user management global group.
+
+* `chef-server-ctl`
+    * Make sure chef-server-ctl install can do chef-manage
+
+* `knife`
+    * Add test for knife-opc org creation
+    * Use validation for knife opc instead of knife
+
+* `updated RAML documentation`
+
+* `chef-server`
+    * Restrict 'other' permissions for chef-server.rb as it may contain secrets.
+    * Remove other permissions on existing copies of chef-server.rb to protect potentially sensitive config options
+
+* `omnibus`
+    * EcPostgres can be used with other databases
+    * Move bootstrap to recipe/library.
+    * Remove chef-server-bootstrap project
+    * Create a consolidated cleanup recipe
+    * Bootstrap preflight checks to prevent multiple bootstraps
+    * Modify postgres preflight checks to have correct assumptions
+    * Fix statem test output formatting
+
+* `rabbitmq`
+    * Correct handling of no rabbitmq in controls endpoint
+    * Set rabbitmq_management listener IP to rabbitmq node_ip_address
+    * Don't monitor rabbit queue length w/ actions disabled
+    * Remove unused jobs queue from rabbitmq setup
+
+* `bookshelf`
+    * Support optionally storing cookbook data in postgresql rather than on the filesystem directly. This is an experimental feature and is off by default. This is only supported for new installs at this time; there is no support for migrating cookbook data from the filesystem to sql (or back).
+    * Remove `bksw_sync` module
+
+* `opscode-expander-reindexer`
+    * Remove opscode-expander-reindexer service
+
 # 12.3.0 (2015-11-12)
 
 ### Components
@@ -57,7 +137,7 @@
 * `omnibus` [fix-warn](https://github.com/chef/chef-server/commit/1128fda0db9a38cb664b5e400feecbe2f459d611)
   * Fixes Chef 13 warning related to using 'environment' attribute to configure 'PATH'.
 * `omnibus` [RyanFrantz-master](https://github.com/chef/chef-server/commit/a50470c41d0ee9d716f860a8d6f79cc14fde5ddd)
-  * the nginx `nginx_status` endpoint is now availalbe.
+  * the nginx `nginx_status` endpoint is now available.
   * Sensibe defaults are defined in `attributes/default`.rb.
 * `omnibus` [571](https://github.com/chef/chef-server/pull/571) - CVE-2014-3628
   * Need the md5sum too...
