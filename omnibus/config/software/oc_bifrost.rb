@@ -17,8 +17,10 @@
 name "oc_bifrost"
 source path: "#{project.files_path}/../../src/oc_bifrost", options: {:exclude => ["_build"]}
 
+license "Apache-2.0"
+license_file "LICENSE"
+
 dependency "erlang"
-dependency "rebar"
 dependency "sqitch"
 
 build do

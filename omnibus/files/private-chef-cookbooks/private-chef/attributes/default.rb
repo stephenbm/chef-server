@@ -53,7 +53,7 @@ default['private_chef']['addons']['path'] = nil
 default['private_chef']['addons']['packages'] =
   %w{opscode-reporting opscode-manage opscode-analytics opscode-push-jobs-server chef-ha chef-sync}
 default['private_chef']['addons']['ubuntu_supported_codenames'] =
-  %w{lucid natty precise}
+  %w{lucid precise trusty}
 default['private_chef']['addons']['ubuntu_distribution'] =
   node['private_chef']['addons']['ubuntu_supported_codenames'].include?(node['lsb']['codename']) ?
   node['lsb']['codename'] : 'lucid'
@@ -327,6 +327,11 @@ default['private_chef']['opscode-erchef']['keygen_key_size'] = 2048
 default['private_chef']['opscode-erchef']['strict_search_result_acls'] = false
 default['private_chef']['opscode-erchef']['ssl_session_caching']['enabled'] = false
 
+# The amount of milliseconds before we timeout and assume an endpoint is down for
+# the /_status endpoint.
+
+default['private_chef']['opscode-erchef']['health_ping_timeout'] = 400
+
 ###
 # Legacy path (required for cookbok migration)
 ###
@@ -402,6 +407,7 @@ default['private_chef']['lb']['redis_connection_pool_size'] = 250
 default['private_chef']['lb']['maint_refresh_interval'] = 600
 default['private_chef']['lb']['ban_refresh_interval'] = 600
 default['private_chef']['lb']['chef_min_version'] = 10
+default['private_chef']['lb']['access_by_lua_file'] = false
 
 ###
 # Load balancer route configuration

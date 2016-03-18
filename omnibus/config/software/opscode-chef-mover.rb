@@ -16,8 +16,8 @@
 
 name "opscode-chef-mover"
 source path: "#{project.files_path}/../../src/chef-mover", options: {:exclude => ["_build"]}
+license :project_license
 dependency "erlang"
-dependency "rebar"
 
 build do
   env = with_standard_compiler_flags(with_embedded_path)

@@ -17,8 +17,10 @@
 name "oc_erchef"
 source path: "#{project.files_path}/../../src/oc_erchef", options: {:exclude => ["_build"]}
 
+license "Apache-2.0"
+license_file "LICENSE"
+
 dependency "erlang"
-dependency "rebar"
 dependency "gecode"
 dependency "sqitch"
 dependency "perl_pg_driver"
