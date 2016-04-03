@@ -22,35 +22,73 @@ In order to release, you will need the following accounts/permissions:
 - Local checkouts of the chef-server and chef-web-downloads repositories
 - Push access to the chef-server github repository
 - Chef Software, Inc Slack account
-- blog.chef.io wordpress account
 - VPN account for Chef Software, Inc.
+- Account on [https://discourse.chef.io](https://discourse.chef.io) using your Chef email address
 - Login for wilson.ci.opscode.us (This is linked to your github
-account.)
+- Login for wilson.ci.chef.co (This is linked to your github account.)
 - Access to artifactory.chef.co
 - Access to delivery.chef.co
-- The CHANGELOG_GITHUB_TOKEN environment variable set to a github token gathered here: https://github.com/settings/tokens/new?description=GitHub%20Changelog%20Generator%20token
-- Install Github Changelog Generator: `gem install github_changelog_generator`
+- The CHANGELOG_GITHUB_TOKEN environment variable set to a github token gathered
+  [here](https://github.com/settings/tokens/new?description=GitHub%20Changelog%20Generator%20token).
+  Read access to repositories and issues should be sufficient.
+- Install Github Changelog Generator
+  + `gem install github_changelog_generator`
 
 
 ## THE PROCESS
+### Informing everyone of a pending release.
+
+- [ ] Announce your intention to drive the release to #cft-announce on slack.
+- [ ] Cross-post this intention on #chef-server and #spool.  Determine whether
+  this upgrade requires a major/minor/patch bump and what the major changes
+  are.
+- [ ] Ensure that the chef-server pipeline on wilson is currently green - you
+  cannot ship if master is broken.
+
 ### Testing the Release
 
 Every commit to chef-server master is tested against a full pedant
 run. However, upgrade testing must still be done in advance of the
 release:
 
-- [ ] Run the Chef Delivery-based automated upgrade testing
-  * Checkout the `chef-server-acceptance` project from delivery.chef.co
-  * Update the `chef_server_test_url-override` attributes in
-    `.delivery/build/attributes/default.rb` to the URL corresponding to
-    the latest package you'd like to test at artifactory.chef.co
-  * Commit the change and run `delivery review`
+- [ ] Run the Chef Delivery-based automated upgrade testing.
+  * Checkout the `chef-server-acceptance` project from delivery.chef.co.
+  * Update relevant attributes in `.delivery/build/attributes/default.rb`:
+    * Update `chef_server_test_url-override` to be the URL corresponding to
+      the latest package you'd like to test at artifactory.chef.co (probably
+      a git poll build that you want to ship as the next version).
+      Remember to use the current channel instead of the unstable stable on
+      artifactory as those are the builds that passed tests on wilson.
+    * Update `chef_server_latest_released_version` to match the last release of
+      the Chef Server. Should match the version at the [download page](https://downloads.chef.io/chef-server/).
+    * Ensure that all entries in `default['delivery-matrix']['acceptance']['matrix']`
+      array are uncommented.
+  * Commit the change and run `delivery review`.
   * When the lint and unit tests pass, approve the change and watch the
-    matrix of tests run
-
+    matrix of tests run. This change will spin off several new changes, so look for
+    them in the root of the project in the delivery UI.
+    After your change, you should see one change per entry in the upgrade test matrix.
+    It will be named "Merged change...".
+  * If you had no failures, AWS instances will be cleaned up for you and the cookbook cleans up any
+    instances over 24 hours old the next time it runs, but it's good to log into
+    AWS and look for any machine instances tagged with
+    `qa-chef-server-cluster-delivery-builder` in `US West (Oregon) us-west-2`
+    region and delete them once all your tests have finished to make sure we
+    don't leave any unused instances
+    up.
+  * If you did have test failure due to an environmental issue unrelated to the
+    release, ask #chef-server and #delivery-support for help.
+    * If delivery.chef.co builders are too constrainted to run the full matrix
+      of 10 jobs comment the second half of the entries in the
+      `default['delivery-matrix']['acceptance']['matrix']` array and run a build.
+      After that build and all its matrix builds finish, run another build with the first half
+      commented and the second half uncommented (see below for where to find matrix builds).
+      Regardless, you should make sure every matrix entry gets run before you ship,
+      so always double-check these attributes, even if running the full matrix, as some
+      might be commented out from previous runs.
 - [ ] If this release is being made to address a specific
   high-urgency, high-severity customer issue or security issue, please
-  test *specifically* that the issue in question is fixed.
+  *specifically* test that the issue in question is fixed.
 
 If one of these tests has failed, you cannot ship a release today.
 Note, no changes other than CHANGELOG/RELEASE_NOTES changes should
@@ -77,14 +115,8 @@ The git SHA of the build you are testing can be found in
 
 - [ ] Check RELEASE_NOTES.md to ensure that it describes the
   most important user-facing changes in the release. This file should
-  form the basis of the blog post in the following step. Update as
+  form the basis of the post to Discourse that comes in a later step. Update as
   appropriate.
-
-- [ ] Write a blog post for blog.chef.io. This requires a wordpress
-  login. If the release contains a fix for a security vulnerability,
-  you MUST tag the post as "security". The blog post should include a
-  link to the downloads page (download.chef.io). Save the post as a
-  draft.
 
 ### Building and Releasing the Release
 
@@ -103,11 +135,12 @@ The git SHA of the build you are testing can be found in
 
 - [ ] Use julia to promote the build: `@julia artifactory promote
   chef-server VERSION from current to stable`.  Please do this in the
-  "#engineering-services" room.  Once this is done, the release is
+  #eng-services-support room.  Once this is done, the release is
   available to the public via the APT and YUM repositories.
 
-- [ ] Support should already know a release is coming; however, as a
-  courtesy, drop a message in the Customer Support slack channel.
+- [ ] Chef employees should already know a release is coming; however, as a
+  courtesy, drop a message in the #cft-announce slack channel that the release
+  is coming. Provide the release number and any highlights of the release.
 
 - [ ] In your local checkout of the chef-web-downloads repository,
 generate an update to the download pages using rake:
@@ -132,10 +165,18 @@ based on the branch you just created.
   change to the live website; however, it might take a few minutes for
   the deploy to complete and then a few more for CDN caches to expire.
 
-- [ ] Publish your draft blog post.
+- [ ] Write and then publish a Discourse post on https://discourse.chef.io
+  once the release is live. This post should contain a link to the downloads
+  page ([https://downloads.chef.io](https://downloads.chef.io)) and its contents
+  should be based on the information that was added to the RELEASE_NOTES.md file
+  in an earlier step. *The post should  be published to the Chef Release
+  Announcements category on https://discourse.chef.io. If it is a security
+  release, it should also be published to the Chef Security Announcements
+  category.* Full details on the policy of making release announcements on
+  Discourse can be found on the wiki under the Engineering section ->
+  Policy and Processes -> Release Announcements and Security Alerts
 
-- [ ] Send an email to the chef and chef-dev mailing lists announcing
-the release with a link to the blog post.
+- [ ] Let `#cft-announce` know about the release, including a link to the Discourse post.
 
 Chef Server is now released.
 
