@@ -1,6 +1,7 @@
 GIT
   remote: git://github.com/chef/omnibus-software.git
-  revision: 3e392f27c2a7d49a2aded125d825d54ac191ea1a
+  revision: 90008680def3bd758bd3b0c4bcb80c58be4ca969
+  branch: cperry/ibm-porting
   specs:
     omnibus-software (4.0.0)
       omnibus (>= 5.2.0)
