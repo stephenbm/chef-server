@@ -20,13 +20,6 @@
 %% under the License.
 %%
 
--record(oc_chef_authz_context,
-        {server_api_version,
-         reqid :: binary(),
-         darklaunch :: term()}).
-
--type oc_chef_authz_context() :: #oc_chef_authz_context{}.
-
 -type requestor_id() :: binary().
 -type actor_id() :: binary().
 -type object_id() :: <<_:256>>.

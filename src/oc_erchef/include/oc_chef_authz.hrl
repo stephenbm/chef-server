@@ -43,6 +43,13 @@
 
 -define(access_methods, [create, read, update, delete, grant]).
 
+-record(oc_chef_authz_context,
+        {server_api_version,
+         reqid :: binary(),
+         darklaunch :: term()}).
+
+-type oc_chef_authz_context() :: #oc_chef_authz_context{}.
+
 -record(chef_container, {
           'id',             % guid for object (unique)
           'authz_id',       % authorization guid (unique)

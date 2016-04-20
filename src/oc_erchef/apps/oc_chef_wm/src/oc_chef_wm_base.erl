@@ -139,6 +139,7 @@ maybe_with_default_org(_Req, #base_state{organization_name = OrgName} = State) w
     State.
 
 forbidden(Req, #base_state{resource_mod = Mod} = State) ->
+    ct:log(error, "forbidden", []),
     case Mod:auth_info(Req, State) of
         {{halt, 403}, Req1, State1} ->
             {Req2, State2} = set_forbidden_msg(Req1, State1),
@@ -959,8 +960,10 @@ verify_request_signature(Req,
                                      auth_skew = AuthSkew,
                                      chef_db_context = DbContext}=State) ->
     Name = wrq:get_req_header("x-ops-userid", Req),
+    ct:log(error, "fetching ~p ~p", [OrgId, Name]),
     case chef_db:fetch_requestors(DbContext, OrgId, Name) of
         not_found ->
+            ct:log(error, "not found", []),
             NotFoundMsg = verify_request_message(user_or_client_not_found, Name, OrgName),
             {false, wrq:set_resp_body(chef_json:encode(NotFoundMsg), Req),
              State#base_state{log_msg = {not_found, user_or_client}}};
@@ -1343,6 +1346,7 @@ check_recursive_group_membership(MemberAuthzId, GroupName, FetchMethod, FetchArg
 -spec resolve_permissions_from_recursive_group_membership(object_id(), object_id(), string(), wm_req(), chef_wm:base_state()) ->
                                                                  {true | false, wm_req(), chef_wm:base_state()}.
 resolve_permissions_from_recursive_group_membership(MemberAuthzId, GroupAuthzId, GroupName, Req, State) ->
+    io:format("hello: ~n ~p ~n ~p ~n", [MemberAuthzId, GroupAuthzId]),
     case oc_chef_authz:is_actor_transitive_member_of_group(oc_chef_authz:superuser_id(), MemberAuthzId, GroupAuthzId) of
         {error, not_found} ->
             {Req1, State1} = set_membership_not_found_forbidden_msg(Req, State, GroupName),

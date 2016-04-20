@@ -51,6 +51,7 @@
          auth_info/3]).
 
 init(Config) ->
+    ct:log(error, "init", []),
     oc_chef_wm_base:init(?MODULE, Config).
 
 -spec init_resource_state(any()) -> {ok, key_state()}.
@@ -164,6 +165,7 @@ auth_info(Req, #base_state{ resource_mod = Mod } = State) ->
 %% GET /users/:user/keys(/:key)
 auth_info('GET', Req, #base_state{organization_guid = undefined,
                                   resource_state = #key_state{parent_authz_id = ActorId}} = State) ->
+    ct:log(error, "get", []),
     {{actor, ActorId}, Req, State};
 %% This code serves 4 endpoints:
 %% + /orgs/:org/clients/:client/keys(/:key)
@@ -172,10 +174,12 @@ auth_info('GET', Req, #base_state{organization_guid = undefined,
 %% For the org scoped ones, we want to check if the requestor is a member
 %% of public_key_read_access group on GET requests to give all users and clients
 %% access on all users and clients if they share an org.
-auth_info('GET', Req, #base_state{resource_state = #key_state{parent_authz_id = ActorId}} = State) ->
-    {{member_of, ActorId, {local, "public_key_read_access"}}, Req, State};
+auth_info('GET', Req, #base_state{requestor = #chef_requestor{authz_id = RequestorAuthzID}} = State) ->
+    ct:log(error, "we in", []),
+    {{member_of, RequestorAuthzID, {local, "public_key_read_access"}}, Req, State};
 %% Non GET methods
 auth_info(_Method, Req, #base_state{resource_state = #key_state{parent_authz_id = AuthzId}}= State) ->
+    ct:log(error, "other", []),
     {{actor, AuthzId, update}, Req, State}.
 
 %% @private
