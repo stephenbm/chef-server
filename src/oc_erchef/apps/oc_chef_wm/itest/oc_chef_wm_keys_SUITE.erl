@@ -1,4 +1,4 @@
-%% M
+%%
 %% -*- erlang-indent-level: 4;indent-tabs-mode: nil; fill-column: 80 -*-
 %% ex: ts=4 sw=4 et
 %% @author Tyler Cloke <tyler@chef.io>
@@ -74,32 +74,32 @@ init_per_suite(LastConfig) ->
 end_per_suite(Config) ->
     setup_helper:base_end_per_suite(Config).
 
-mock_make_context() ->
+mock_auth_basics(RequestorAuthzId) ->
     hoax:mock(oc_chef_authz,
 	      ?expect(superuser_id,
 		      ?withArgs([]),
 		      ?andReturn(<<"00000000000000000000000000000000">>))),
-    hoax:mock(oc_chef_authz,
-	      ?expect(create_entity_if_authorized,
-		      ?withArgs([?any, ?any, ?any, ?any]),
-		      ?andReturn(fun(_,_,_) ->
-					 <<RandomInt:128>> = crypto:rand_bytes(16),
-					 RandomId = iolist_to_binary(io_lib:format("~32.16.0b", [RandomInt])),
-					 {ok, RandomId}
-				 end
-				))),
-    hoax:mock(oc_chef_authz,
-	      ?expect(delete_resource,
-		      ?withArgs([?any, ?any, ?any]),
-		      ?andReturn(ok))),
-    hoax:mock(oc_chef_authz,
-	      ?expect(get_container_aid_for_object,
-		      ?withArgs([?any, ?any, ?any]),
-		      ?andReturn(<<"00000000000000000000000000000000">>))),
-    hoax:mock(oc_chef_authz,
-	      ?expect(is_authorized_on_resource,
-		      ?withArgs([?any, ?any, ?any, ?any, ?any, ?any]),
-		      ?andReturn(true))),
+    %% hoax:mock(oc_chef_authz,
+    %% 	      ?expect(create_entity_if_authorized,
+    %% 		      ?withArgs([?any, ?any, ?any, ?any]),
+    %% 		      ?andReturn(fun(_,_,_) ->
+    %% 					 <<RandomInt:128>> = crypto:rand_bytes(16),
+    %% 					 RandomId = iolist_to_binary(io_lib:format("~32.16.0b", [RandomInt])),
+    %% 					 {ok, RandomId}
+    %% 				 end
+    %% 				))),
+    %% hoax:mock(oc_chef_authz,
+    %% 	      ?expect(delete_resource,
+    %% 		      ?withArgs([?any, ?any, ?any]),
+    %% 		      ?andReturn(ok))),
+    %% hoax:mock(oc_chef_authz,
+    %% 	      ?expect(get_container_aid_for_object,
+    %% 		      ?withArgs([?any, ?any, ?any]),
+    %% 		      ?andReturn(<<"00000000000000000000000000000000">>))),
+    %% hoax:mock(oc_chef_authz,
+    %% 	      ?expect(is_authorized_on_resource,
+    %% 		      ?withArgs([?any, ?any, ?any, ?any, ?any, ?any]),
+    %% 		      ?andReturn(true))),
     hoax:mock(oc_chef_authz,
 	      ?expect(make_context,
 		      ?withArgs([?any, ?any, ?any]),
@@ -107,9 +107,24 @@ mock_make_context() ->
 			      #oc_chef_authz_context{server_api_version = ApiVersion,
 						     reqid = ReqId,
 						     darklaunch = Darklaunch}
-		      end))).
+				 end))),
+    hoax:mock(chef_authn,
+	      ?expect(authenticate_user_request,
+		      ?withArgs([?any, ?any, ?any, ?any, ?any, ?any]),
+		      ?andReturn({name, <<"mock_user">>, #chef_requestor{name = <<"default">>, authz_id = RequestorAuthzId, type = <<"client">> }}))),
+    hoax:mock(chef_authn,
+	      ?expect(validate_headers,
+		      ?withArgs([?any, ?any]),
+		      ?andReturn([{'algorithm', <<"SHA1">>},
+				  {'version', <<"1.0">>}]))).
 
-load_fetch_group_mock(Config) ->
+mock_is_authorized_on_resource() ->
+    hoax:mock(oc_chef_authz,
+    	      ?expect(is_authorized_on_resource,
+    		      ?withArgs([?any, ?any, ?any, ?any, ?any, ?any]),
+    		      ?andReturn(true))).
+
+mock_fetch_group(Config) ->
     OrgId = proplists:get_value(org_id, Config),
     hoax:mock(oc_chef_authz_db,
 	      ?expect(fetch_group,
@@ -124,7 +139,7 @@ load_fetch_group_mock(Config) ->
 						created_at=nil,
 						updated_at=nil}))).
 
-load_is_actor_transitive_member_of_group_mock(RequestorAuthzId) ->
+mock_is_actor_transitive_member_of_group(RequestorAuthzId) ->
     hoax:mock(oc_chef_authz,
 	      ?expect(is_actor_transitive_member_of_group,
 		      ?withArgs([?any, RequestorAuthzId, ?ORG_KEYS_ACCESS_GROUP_AUTHZ_ID]),
@@ -132,14 +147,14 @@ load_is_actor_transitive_member_of_group_mock(RequestorAuthzId) ->
 
 all() ->
     [
-     user_list_client_default_key,
-     client_list_user_org_scoped_default_key%,
-     %list_client_default_key,
-     %% list_user_default_key,
-     %% list_client_multiple_keys,
-     %% list_user_multiple_keys,
-     %% list_client_no_keys,
-     %% list_user_no_keys,
+%     user_list_client_default_key,
+%     client_list_user_org_scoped_default_key,
+     list_client_default_key%,
+%     list_user_default_key,
+%     list_client_multiple_keys,
+%     list_user_multiple_keys,
+%     list_client_no_keys,
+%     list_user_no_keys%,
      %% get_client_default_key,
      %% get_user_default_key,
      %% get_client_multiple_keys,
@@ -181,45 +196,43 @@ all() ->
      %% put_generate_new_client_key,
      %% put_full_user_key,
      %% put_generate_new_user_key
-     ].
+     ].    
 
 user_list_client_default_key(Config) ->
     hoax:test(fun() ->
-		      ct:log(error, "in test", []),
-		      make_admin_non_admin_and_client(Config),
-		      ct:log(error, "made", []),
-		      load_fetch_group_mock(Config),
-		      load_is_actor_transitive_member_of_group_mock(?USER_AUTHZ_ID),
-		      mock_make_context(),
-		      Result = http_key_request(get, client, ?USER_AUTHZ_ID),
+		      mock_auth_basics(?USER_AUTHZ_ID),
+		      mock_fetch_group(Config),
+		      mock_is_actor_transitive_member_of_group(?USER_AUTHZ_ID),
+		      Result = http_key_request(get, client, ?USER_NAME),
+		      ?assertMatch({ok, "200", _, _} , Result),
 		      BodyEJ = decoded_response_body(Result),
 		      ExpectedEJ = client_key_list_ejson(?CLIENT_NAME, [?DEFAULT_KEY_ENTRY]),
-		      %% Call this first to make sure mocks were called properly.
-		      %?verifyAll,
-		      ?assertMatch({ok, "200", _, _} , Result),
-		      ?assertMatch(ExpectedEJ, BodyEJ)
+		      ?assertMatch(ExpectedEJ, BodyEJ),
+		      ?verifyAll
 	      end).
 
 
 client_list_user_org_scoped_default_key(Config) ->
     hoax:test(fun() ->
-		      load_fetch_group_mock(Config),
-		      load_is_actor_transitive_member_of_group_mock(?CLIENT_AUTHZ_ID),
-		      %mock_make_context(),
-		      Result = http_key_request(get, org_scoped_user, ?CLIENT_AUTHZ_ID),
-		      BodyEJ = decoded_response_body(Result),
-		      ExpectedEJ = user_key_list_ejson(?USER_NAME, [?DEFAULT_KEY_ENTRY]),
-		      ?verifyAll,
+		      mock_auth_basics(?CLIENT_AUTHZ_ID),
+		      mock_fetch_group(Config),
+		      mock_is_actor_transitive_member_of_group(?CLIENT_AUTHZ_ID),
+		      Result = http_key_request(get, org_scoped_user, ?CLIENT_NAME),
 		      ?assertMatch({ok, "200", _, _} , Result),
-		      ?assertMatch(ExpectedEJ, BodyEJ)
+		      BodyEJ = decoded_response_body(Result),
+		      ExpectedEJ = org_scoped_user_key_list_ejson(?USER_NAME, ?ORG_NAME, [?DEFAULT_KEY_ENTRY]),
+		      ?assertMatch(ExpectedEJ, BodyEJ),
+		      ?verifyAll
 	      end).
 
 %% GET /organizations/org/clients/client/keys && GET /users/client/keys
 list_client_default_key(Config) ->
     hoax:test(fun() ->
-		      load_fetch_group_mock(Config),
-		      load_is_actor_transitive_member_of_group_mock(?CLIENT_AUTHZ_ID),
-		      Result = http_key_request(get, client, ?ADMIN_AUTHZ_ID),
+		      mock_auth_basics(?ADMIN_AUTHZ_ID),
+		      mock_is_authorized_on_resource(),
+		      mock_fetch_group(Config),
+		      mock_is_actor_transitive_member_of_group(?ADMIN_AUTHZ_ID),
+		      Result = http_key_request(get, client, ?ADMIN_USER_NAME),
 		      ?assertMatch({ok, "200", _, _} , Result),
 		      BodyEJ = decoded_response_body(Result),
 		      ExpectedEJ = client_key_list_ejson(?CLIENT_NAME, [?DEFAULT_KEY_ENTRY]),
@@ -228,46 +241,58 @@ list_client_default_key(Config) ->
 	      end).
 
 list_user_default_key(_) ->
-    Result = http_key_request(get, user, ?USER_NAME),
-    ?assertMatch({ok, "200", _, _} , Result),
-    BodyEJ = decoded_response_body(Result),
-    ExpectedEJ = user_key_list_ejson(?USER_NAME, [?DEFAULT_KEY_ENTRY]),
-    ?assertMatch(ExpectedEJ, BodyEJ).
-
-list_client_multiple_keys(Config) ->
     hoax:test(fun() ->
-		      load_fetch_group_mock(Config),
+		      mock_auth_basics(?USER_AUTHZ_ID),
+		      Result = http_key_request(get, user, ?USER_NAME),
+		      ?assertMatch({ok, "200", _, _} , Result),
+		      BodyEJ = decoded_response_body(Result),
+		      ExpectedEJ = user_key_list_ejson(?USER_NAME, [?DEFAULT_KEY_ENTRY]),
+		      ?assertMatch(ExpectedEJ, BodyEJ),
+		      ?verifyAll
+	      end).
+
+list_client_multiple_keys(_) ->
+    hoax:test(fun() ->
+		      mock_auth_basics(?CLIENT_AUTHZ_ID),
 		      Result = http_key_request(get, client, ?CLIENT_NAME),
 		      ?assertMatch({ok, "200", _, _} , Result),
 		      BodyEJ = decoded_response_body(Result),
 		      ExpectedEJ = client_key_list_ejson(?CLIENT_NAME, [?DEFAULT_KEY_ENTRY, ?KEY_1_ENTRY, ?KEY_2_ENTRY]),
-		      ?verifyAll,
-		      ?assertMatch(ExpectedEJ, BodyEJ)
+		      ?assertMatch(ExpectedEJ, BodyEJ),
+		      ?verifyAll
 	      end).
 
 list_user_multiple_keys(_) ->
-    Result = http_key_request(get, user, ?USER_NAME),
-    ?assertMatch({ok, "200", _, _} , Result),
-    BodyEJ = decoded_response_body(Result),
-    ExpectedEJ = user_key_list_ejson(?USER_NAME, [?DEFAULT_KEY_ENTRY, ?KEY_1_ENTRY, ?KEY_2_ENTRY]),
-    ?assertMatch(ExpectedEJ, BodyEJ).
-
-list_client_no_keys(Config) ->
     hoax:test(fun() ->
-		      load_fetch_group_mock(Config),
+		      mock_auth_basics(?USER_AUTHZ_ID),
+		      Result = http_key_request(get, user, ?USER_NAME),
+		      ?assertMatch({ok, "200", _, _} , Result),
+		      BodyEJ = decoded_response_body(Result),
+		      ExpectedEJ = user_key_list_ejson(?USER_NAME, [?DEFAULT_KEY_ENTRY, ?KEY_1_ENTRY, ?KEY_2_ENTRY]),
+		      ?assertMatch(ExpectedEJ, BodyEJ),
+		      ?verifyAll
+	      end).
+
+list_client_no_keys(_) ->
+    hoax:test(fun() ->
+		      mock_auth_basics(?ADMIN_AUTHZ_ID),
 		      Result = http_key_request(get, client, ?ADMIN_USER_NAME),
 		      ?assertMatch({ok, "200", _, "[]"} , Result),
 		      ?verifyAll
 	      end).
 
 list_user_no_keys(_) ->
-    Result = http_key_request(get, user, ?ADMIN_USER_NAME),
-    ?assertMatch({ok, "200", _, "[]"} , Result).
+    hoax:test(fun() ->
+		      mock_auth_basics(?ADMIN_AUTHZ_ID),
+		      Result = http_key_request(get, user, ?ADMIN_USER_NAME),
+		      ?assertMatch({ok, "200", _, "[]"} , Result),
+		      ?verifyAll
+	      end).
 
 %% GET /organizations/org/clients/client/keys/key && GET /users/client/keys/key
 get_client_default_key(Config) ->
     hoax:test(fun() ->
-		      load_fetch_group_mock(Config),
+		      mock_fetch_group(Config),
 		      Result = http_named_key_request(get, client, ?CLIENT_NAME, "default"),
 		      ?assertMatch({ok, "200", _, _}, Result),
 		      BodyEJ = decoded_response_body(Result),
@@ -285,7 +310,7 @@ get_user_default_key(Config) ->
 
 get_client_multiple_keys(Config) ->
     hoax:test(fun() ->
-		      load_fetch_group_mock(Config),
+		      mock_fetch_group(Config),
 		      %% KEY1
 		      Result = http_named_key_request(get, client, ?CLIENT_NAME, ?KEY1NAME),
 		      ?assertMatch({ok, "200", _, _}, Result),
@@ -355,7 +380,7 @@ delete_invalid_client_key(_Config) ->
 
 put_rename_client_key(Config) ->
     hoax:test(fun() ->
-		      load_fetch_group_mock(Config),
+		      mock_fetch_group(Config),
 		      validate_rename(client , "201", "404"),
 		      ?verifyAll
 	      end).
@@ -363,7 +388,7 @@ put_rename_client_key(Config) ->
 
 put_rename_duplicate_client_key(Config) ->
     hoax:test(fun() ->
-		      load_fetch_group_mock(Config),
+		      mock_fetch_group(Config),
 		      validate_rename(client, "409", "200"),
 		      ?verifyAll
 	      end).
@@ -376,7 +401,7 @@ put_rename_duplicate_user_key(_Config) ->
 
 put_full_client_key(Config) ->
     hoax:test(fun() ->
-		      load_fetch_group_mock(Config),
+		      mock_fetch_group(Config),
 		      validate_put_full_key(Config, client),
 		      ?verifyAll
 	      end).
@@ -392,7 +417,7 @@ put_generate_new_user_key(Config) ->
 
 put_valid_partial_user_key(Config) ->
     hoax:test(fun() ->
-		      load_fetch_group_mock(Config),
+		      mock_fetch_group(Config),
 		      validate_put_partial_key_valid(Config, user, <<"expiration_date">>, ?KEY2EXPIRESTRING),
 		      validate_put_partial_key_valid(Config, user, <<"public_key">>, proplists:get_value(alt_pubkey, Config)),
 		      ?verifyAll
@@ -400,7 +425,7 @@ put_valid_partial_user_key(Config) ->
 
 put_valid_partial_client_key(Config) ->
     hoax:test(fun() ->
-		      load_fetch_group_mock(Config),
+		      mock_fetch_group(Config),
 		      validate_put_partial_key_valid(Config, client, <<"expiration_date">>, ?KEY2EXPIRESTRING),
 		      validate_put_partial_key_valid(Config, client, <<"public_key">>, proplists:get_value(alt_pubkey, Config)),
 		      ?verifyAll
@@ -789,9 +814,7 @@ make_user(Config, Name, AuthzId, OrgId) ->
                                      {<<"email">>, <<Name/binary,Dom/binary>>},
                                      {<<"public_key">>, PubKey},
                                      {<<"display_name">>, <<"someone">>}]}),
-    Result = chef_db:create(User, context(), ?USER_AUTHZ_ID),
-    ct:log(error, "result ~p", [Result]),
-    Result.
+    chef_db:create(User, context(), ?USER_AUTHZ_ID).
 
 %% TODO: should this be updated to use the POST endpoint?
 add_key(Config, Id, KeyName, ExpirationDate) ->
@@ -869,6 +892,11 @@ user_key_list_ejson(Name, KeyInfo) ->
     Base = <<"http://localhost:8000/users/">>,
     Keys = <<"/keys/">>,
     key_list_ejson(<<Base/binary,Name/binary,Keys/binary>>, KeyInfo).
+org_scoped_user_key_list_ejson(Name, OrgName, KeyInfo) ->
+    Base = <<"http://localhost:8000/organizations/">>,
+    Users =  <<"/users/">>,
+    Keys = <<"/keys/">>,
+    key_list_ejson(<<Base/binary,OrgName/binary,Users/binary,Name/binary,Keys/binary>>, KeyInfo).
 client_key_list_ejson(Name, KeyInfo) ->
     Base = <<"http://localhost:8000/organizations/testorg/clients/">>,
     Keys = <<"/keys/">>,
