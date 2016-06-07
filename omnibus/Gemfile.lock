@@ -1,6 +1,6 @@
 GIT
   remote: git://github.com/chef/omnibus-software.git
-  revision: 83eaa9546d1c4913d236b9d28b4da1c63d294c50
+  revision: 8f4ad04674d3113d53759373d668f6495a84f178
   branch: shain/update_server_ppc64
   specs:
     omnibus-software (4.0.0)
@@ -8,7 +8,7 @@ GIT
 
 GIT
   remote: git://github.com/chef/omnibus.git
-  revision: ea5273b9cc3e3de32b93ae959ba76cc148613d60
+  revision: 2a597277f1a5e13901d116ef852611fe88f6b76b
   specs:
     omnibus (5.4.0)
       aws-sdk (~> 2)
@@ -25,12 +25,12 @@ GEM
   remote: https://rubygems.org/
   specs:
     addressable (2.4.0)
-    aws-sdk (2.3.5)
-      aws-sdk-resources (= 2.3.5)
-    aws-sdk-core (2.3.5)
+    aws-sdk (2.3.12)
+      aws-sdk-resources (= 2.3.12)
+    aws-sdk-core (2.3.12)
       jmespath (~> 1.0)
-    aws-sdk-resources (2.3.5)
-      aws-sdk-core (= 2.3.5)
+    aws-sdk-resources (2.3.12)
+      aws-sdk-core (= 2.3.12)
     berkshelf (4.3.0)
       addressable (~> 2.3, >= 2.3.4)
       berkshelf-api-client (~> 2.0, >= 2.0.2)
