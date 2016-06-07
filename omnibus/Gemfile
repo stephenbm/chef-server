@@ -7,7 +7,7 @@ gem 'berkshelf'
 # Install omnibus software
 group :omnibus do
   gem 'omnibus', github: 'chef/omnibus'
-  gem 'omnibus-software', github: 'chef/omnibus-software'
+  gem 'omnibus-software', github: 'chef/omnibus-software', branch: 'shain/update_server_ppc64'
 end
 
 group :test do
