@@ -1,6 +1,6 @@
 GIT
   remote: git://github.com/chef/omnibus-software.git
-  revision: a38917ae7f7921eb69f879188a37fbc58482d573
+  revision: 83b1730153bc5b6ac03fc4fccade438eba589d4e
   branch: shain/update_server_ppc64
   specs:
     omnibus-software (4.0.0)
